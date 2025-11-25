@@ -1,0 +1,64 @@
+UDA Comprehensive Test Log - Tue Nov 25 07:50:00 PM +07 2025
+=============================================
+2025-11-25 19:50:00,216 - __main__ - INFO - 🎯 Starting Complete Isolated UDA Test Suite
+2025-11-25 19:50:00,216 - __main__ - INFO - 🧪 Starting Mock Kit Server...
+2025-11-25 19:50:02,234 - __main__ - INFO - ✅ Mock Kit Server started successfully
+2025-11-25 19:50:02,235 - __main__ - INFO - 🐍 Testing Non-Docker Mode with 3 devices...
+2025-11-25 19:50:02,235 - __main__ - INFO - 📱 Starting UDA agent device-1 in non-docker mode...
+2025-11-25 19:50:07,240 - __main__ - INFO - ✅ UDA agent device-1 started successfully
+2025-11-25 19:50:07,240 - __main__ - INFO - 📦 Deploying speed-monitor to device-1...
+2025-11-25 19:50:07,243 - __main__ - INFO - ✅ App speed-monitor deployed to device-1
+2025-11-25 19:50:07,243 - __main__ - INFO - 📦 Deploying gps-tracker to device-1...
+2025-11-25 19:50:07,244 - __main__ - INFO - ✅ App gps-tracker deployed to device-1
+2025-11-25 19:50:09,246 - __main__ - INFO - 📱 Starting UDA agent device-2 in non-docker mode...
+2025-11-25 19:50:14,251 - __main__ - INFO - ✅ UDA agent device-2 started successfully
+2025-11-25 19:50:14,251 - __main__ - INFO - 📦 Deploying speed-monitor to device-2...
+2025-11-25 19:50:14,252 - __main__ - INFO - ✅ App speed-monitor deployed to device-2
+2025-11-25 19:50:14,252 - __main__ - INFO - 📦 Deploying gps-tracker to device-2...
+2025-11-25 19:50:14,254 - __main__ - INFO - ✅ App gps-tracker deployed to device-2
+2025-11-25 19:50:16,256 - __main__ - INFO - 📱 Starting UDA agent device-3 in non-docker mode...
+2025-11-25 19:50:21,262 - __main__ - INFO - ✅ UDA agent device-3 started successfully
+2025-11-25 19:50:21,262 - __main__ - INFO - 📦 Deploying speed-monitor to device-3...
+2025-11-25 19:50:21,263 - __main__ - INFO - ✅ App speed-monitor deployed to device-3
+2025-11-25 19:50:21,264 - __main__ - INFO - 📦 Deploying gps-tracker to device-3...
+2025-11-25 19:50:21,265 - __main__ - INFO - ✅ App gps-tracker deployed to device-3
+2025-11-25 19:50:23,267 - __main__ - INFO - ⏳ Waiting for apps to complete...
+2025-11-25 19:50:33,272 - __main__ - INFO - 📊 Collecting test results...
+2025-11-25 19:50:33,274 - __main__ - INFO - 
+============================================================
+2025-11-25 19:50:33,274 - __main__ - INFO - 📋 ISOLATED UDA TEST RESULTS
+2025-11-25 19:50:33,274 - __main__ - INFO - ============================================================
+2025-11-25 19:50:33,274 - __main__ - INFO - 📊 Summary:
+2025-11-25 19:50:33,274 - __main__ - INFO -    Total Tests: 0
+2025-11-25 19:50:33,274 - __main__ - INFO -    Devices Registered: 3
+2025-11-25 19:50:33,274 - __main__ - INFO -    Apps Deployed: 6
+2025-11-25 19:50:33,274 - __main__ - INFO - 
+📱 Devices (3):
+2025-11-25 19:50:33,274 - __main__ - INFO -    ✅ device-1: connected
+2025-11-25 19:50:33,274 - __main__ - INFO -    ✅ device-2: connected
+2025-11-25 19:50:33,274 - __main__ - INFO -    ✅ device-3: connected
+2025-11-25 19:50:33,274 - __main__ - INFO - 
+📦 App Deployments:
+2025-11-25 19:50:33,274 - __main__ - INFO -    Device device-1:
+2025-11-25 19:50:33,274 - __main__ - INFO -       📦 speed-monitor: deployed
+2025-11-25 19:50:33,274 - __main__ - INFO -       📦 gps-tracker: deployed
+2025-11-25 19:50:33,274 - __main__ - INFO -    Device device-2:
+2025-11-25 19:50:33,274 - __main__ - INFO -       📦 speed-monitor: deployed
+2025-11-25 19:50:33,274 - __main__ - INFO -       📦 gps-tracker: deployed
+2025-11-25 19:50:33,274 - __main__ - INFO -    Device device-3:
+2025-11-25 19:50:33,274 - __main__ - INFO -       📦 speed-monitor: deployed
+2025-11-25 19:50:33,274 - __main__ - INFO -       📦 gps-tracker: deployed
+2025-11-25 19:50:33,274 - __main__ - INFO - 
+🎯 Test Events (0):
+2025-11-25 19:50:33,274 - __main__ - INFO - 
+🎉 TEST SUITE PASSED!
+2025-11-25 19:50:33,274 - __main__ - INFO -    ✅ 3 devices registered and connected
+2025-11-25 19:50:33,274 - __main__ - INFO -    ✅ 6 apps deployed successfully (2 per device)
+2025-11-25 19:50:33,274 - __main__ - INFO -    ✅ UDA communication working
+2025-11-25 19:50:33,274 - __main__ - INFO -    ✅ Mock Kit Server functioning
+2025-11-25 19:50:33,274 - __main__ - INFO - ============================================================
+2025-11-25 19:50:33,274 - __main__ - INFO - 🧹 Cleaning up test resources...
+2025-11-25 19:50:33,274 - __main__ - INFO - 🛑 Stopping UDA agent device-1...
+2025-11-25 19:50:33,277 - __main__ - INFO - 🛑 Stopping UDA agent device-2...
+2025-11-25 19:50:33,281 - __main__ - INFO - 🛑 Stopping UDA agent device-3...
+2025-11-25 19:50:33,284 - __main__ - INFO - 🛑 Stopping Mock Kit Server...
