@@ -33,7 +33,8 @@ TEST_SUITES = [
             ("test_deploy_request.py", "Deploy Request Test"),
             ("test_run_python_app.py", "Run Python App Test"),
             ("test_stop_python_app.py", "Stop Python App Test"),
-            ("test_output_to_kitserver.py", "Output Messages to Kit Server Test")
+            ("test_output_to_kitserver.py", "Output Messages to Kit Server Test"),
+            ("test_sdv_app_deployment.py", "SDV App Deployment with sdv imports Test")
         ]
     },
 
