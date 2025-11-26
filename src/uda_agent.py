@@ -103,7 +103,33 @@ class UniversalDeploymentAgent:
             logger.info(f"✅ Runtime registration acknowledged by Kit Server")
             logger.info(f"📋 Runtime '{self.runtime_name}' is now online and discoverable")
 
-        # Catch-all event listener for debugging
+        # SDV Runtime Compatible Event Handlers
+        @self.sio.event
+        def messageToKit(data):
+            """Handle SDV runtime compatible messages"""
+            try:
+                cmd = data.get('cmd', '')
+                request_from = data.get('request_from', 'unknown')
+
+                logger.info(f"📨 SDV Runtime Command: {cmd}")
+
+                if cmd in ['deploy_request', 'deploy_n_run', 'run_python_app']:
+                    self._handle_sdv_deploy(data, request_from)
+                elif cmd == 'stop_python_app':
+                    self._handle_sdv_stop(data, request_from)
+                elif cmd == 'get-runtime-info':
+                    self._handle_sdv_status(data, request_from)
+                else:
+                    logger.warning(f"⚠️ Unknown SDV command: {cmd}")
+                    self._send_sdv_response(request_from, cmd, "Unknown command", False, 1)
+
+            except Exception as e:
+                logger.error(f"❌ Error handling SDV message: {e}")
+                request_from = data.get('request_from', 'unknown')
+                cmd = data.get('cmd', 'unknown')
+                self._send_sdv_response(request_from, cmd, str(e), False, 1)
+
+        # Catch-all event listener for debugging (must be last)
         @self.sio.on('*')
         def catch_all(event, data):
             logger.info(f"📨 Kit Server Event: {event}")
@@ -308,32 +334,6 @@ class UniversalDeploymentAgent:
                 'apps': apps_status,
                 'timestamp': datetime.now().isoformat()
             })
-
-        # SDV Runtime Compatible Event Handlers
-        @self.sio.event
-        def messageToKit(data):
-            """Handle SDV runtime compatible messages"""
-            try:
-                cmd = data.get('cmd', '')
-                request_from = data.get('request_from', 'unknown')
-
-                logger.info(f"📨 SDV Runtime Command: {cmd}")
-
-                if cmd in ['deploy_request', 'deploy_n_run', 'run_python_app']:
-                    self._handle_sdv_deploy(data, request_from)
-                elif cmd == 'stop_python_app':
-                    self._handle_sdv_stop(data, request_from)
-                elif cmd == 'get-runtime-info':
-                    self._handle_sdv_status(data, request_from)
-                else:
-                    logger.warning(f"⚠️ Unknown SDV command: {cmd}")
-                    self._send_sdv_response(request_from, cmd, "Unknown command", False, 1)
-
-            except Exception as e:
-                logger.error(f"❌ Error handling SDV message: {e}")
-                request_from = data.get('request_from', 'unknown')
-                cmd = data.get('cmd', 'unknown')
-                self._send_sdv_response(request_from, cmd, str(e), False, 1)
 
     def _handle_sdv_deploy(self, data, request_from):
         """Handle SDV runtime app deployment"""
