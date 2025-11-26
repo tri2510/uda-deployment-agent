@@ -260,7 +260,7 @@ class UniversalDeploymentAgent:
     def send_deployment_status(self, request_from, app_name, status_message, token=None, is_finish=False):
         """Send deployment status update"""
         message = f"Deploying {app_name}: {status_message}"
-        self.send_kit_server_reply(request_from, 'deploy_request', message, is_finish=is_finish, code=0, token=token)
+        self.send_kit_server_reply(request_from, 'deploy_request', message, is_done=is_finish, code=0, token=token)
 
     def send_app_output(self, request_from, app_name, output_line, cmd='run_python_app'):
         """Send real-time app output line"""
