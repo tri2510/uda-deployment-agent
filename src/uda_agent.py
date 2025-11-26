@@ -35,13 +35,17 @@ logger = logging.getLogger(__name__)
 class UniversalDeploymentAgent:
     """SDV Runtime Compatible Universal Deployment Agent"""
 
-    def __init__(self, kit_server_url="https://kit.digitalauto.tech"):
+    def __init__(self, kit_server_url="https://kit.digitalauto.tech", mqtt_host="localhost", mqtt_port=1883, auto_start_mqtt=True):
         self.sio = socketio.Client()
         self.kit_server_url = kit_server_url
         self.running_apps = {}
         self.deployment_dir = os.environ.get('UDA_DEPLOYMENT_DIR', './deployments')
         self.log_dir = os.environ.get('UDA_LOG_DIR', './logs')
         self.runtime_file = os.path.join(os.path.dirname(__file__), '.runtime_name')
+        self.mqtt_host = mqtt_host
+        self.mqtt_port = mqtt_port
+        self.auto_start_mqtt = auto_start_mqtt
+        self.mqtt_process = None
 
         # Ensure directories exist
         os.makedirs(self.deployment_dir, exist_ok=True)
@@ -62,6 +66,9 @@ class UniversalDeploymentAgent:
 
         # Setup SDV compatibility layer for legacy imports
         self._setup_sdv_compatibility()
+
+        # Setup MQTT broker if needed
+        self._setup_mqtt_broker()
 
         # Setup Socket.IO event handlers
         self.setup_events()
@@ -234,6 +241,97 @@ class UniversalDeploymentAgent:
 
         except ImportError as e:
             logger.error(f"❌ Fallback compatibility failed: {e}")
+
+    def _setup_mqtt_broker(self):
+        """Setup MQTT broker - auto-start if needed or check connectivity"""
+        if not self.auto_start_mqtt:
+            logger.info("📡 MQTT auto-start disabled - using external broker")
+            self._test_mqtt_connection()
+            return
+
+        try:
+            # Check if mosquitto is available
+            import subprocess
+            result = subprocess.run(['which', 'mosquitto'], capture_output=True, text=True)
+            if result.returncode != 0:
+                logger.warning("⚠️ mosquitto not found - cannot auto-start MQTT broker")
+                self._test_mqtt_connection()
+                return
+
+            # Check if MQTT broker is already running on the specified port
+            if self._test_mqtt_connection():
+                logger.info(f"✅ MQTT broker already available at {self.mqtt_host}:{self.mqtt_port}")
+                return
+
+            # Start MQTT broker
+            logger.info(f"🚀 Starting MQTT broker on {self.mqtt_host}:{self.mqtt_port}")
+
+            # Create mosquitto config
+            config_content = f"""listener {self.mqtt_port}
+allow_anonymous true
+"""
+
+            # Start mosquitto as subprocess
+            self.mqtt_process = subprocess.Popen([
+                'mosquitto', '-d', '-p', str(self.mqtt_port)
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+            # Wait a moment for startup
+            import time
+            time.sleep(2)
+
+            # Verify it started successfully
+            if self._test_mqtt_connection():
+                logger.info(f"✅ MQTT broker started successfully on port {self.mqtt_port}")
+            else:
+                logger.warning(f"⚠️ MQTT broker may not be responding on port {self.mqtt_port}")
+                if self.mqtt_process:
+                    self.mqtt_process.terminate()
+                    self.mqtt_process = None
+
+        except Exception as e:
+            logger.error(f"❌ Failed to setup MQTT broker: {e}")
+            logger.info("📡 Will attempt to use existing MQTT broker")
+
+    def _test_mqtt_connection(self):
+        """Test if MQTT broker is available and responding"""
+        try:
+            import socket
+            import sys
+
+            # Test TCP connection to MQTT port
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(3)  # 3 second timeout
+
+            result = sock.connect_ex((self.mqtt_host, self.mqtt_port))
+            sock.close()
+
+            if result == 0:
+                logger.debug(f"✅ MQTT broker reachable at {self.mqtt_host}:{self.mqtt_port}")
+                return True
+            else:
+                logger.debug(f"❌ MQTT broker not reachable at {self.mqtt_host}:{self.mqtt_port}")
+                return False
+
+        except Exception as e:
+            logger.debug(f"MQTT connection test failed: {e}")
+            return False
+
+    def _stop_mqtt_broker(self):
+        """Stop auto-started MQTT broker"""
+        if self.mqtt_process and self.auto_start_mqtt:
+            try:
+                logger.info("🛑 Stopping MQTT broker...")
+                self.mqtt_process.terminate()
+                self.mqtt_process.wait(timeout=5)
+                logger.info("✅ MQTT broker stopped")
+            except subprocess.TimeoutExpired:
+                self.mqtt_process.kill()
+                logger.warning("🔨 MQTT broker force killed")
+            except Exception as e:
+                logger.error(f"❌ Error stopping MQTT broker: {e}")
+            finally:
+                self.mqtt_process = None
 
     # Kit Server Compatible Helper Methods
     def send_kit_server_reply(self, request_from, cmd, result, is_done=True, code=0, token=None):
@@ -475,7 +573,15 @@ class UniversalDeploymentAgent:
             env.update({
                 'KUKSA_DATA_BROKER_ADDRESS': os.environ.get('KUKSA_DATA_BROKER_ADDRESS', 'localhost:55555'),
                 'UDA_APP_NAME': app_name,
-                'UDA_AGENT_ID': self.device_id
+                'UDA_AGENT_ID': self.device_id,
+                # MQTT broker configuration (use configured settings)
+                'MQTT_BROKER_HOST': self.mqtt_host,
+                'MQTT_BROKER_PORT': str(self.mqtt_port),
+                'VEHICLERUNTIME_MQTT_BROKER_HOST': self.mqtt_host,
+                'VEHICLERUNTIME_MQTT_BROKER_PORT': str(self.mqtt_port),
+                # Mock Dapr settings to avoid connection attempts
+                'DAPR_HTTP_PORT': '3500',
+                'DAPR_GRPC_PORT': '50001'
             })
 
             # Execute with python -u for unbuffered output
@@ -738,6 +844,9 @@ class UniversalDeploymentAgent:
         if self.sio.connected:
             self.sio.disconnect()
 
+        # Stop MQTT broker if we started it
+        self._stop_mqtt_broker()
+
         logger.info("✅ UDA Agent shutdown complete")
 
 def main():
@@ -760,6 +869,22 @@ def main():
         default='./logs',
         help='Log directory (default: ./logs)'
     )
+    parser.add_argument(
+        '--mqtt-host',
+        default='localhost',
+        help='MQTT broker host (default: localhost)'
+    )
+    parser.add_argument(
+        '--mqtt-port',
+        type=int,
+        default=1883,
+        help='MQTT broker port (default: 1883)'
+    )
+    parser.add_argument(
+        '--no-auto-mqtt',
+        action='store_true',
+        help='Disable automatic MQTT broker startup'
+    )
 
     args = parser.parse_args()
 
@@ -768,7 +893,12 @@ def main():
     os.environ['UDA_LOG_DIR'] = args.log_dir
 
     # Create and start agent
-    agent = UniversalDeploymentAgent(kit_server_url=args.server)
+    agent = UniversalDeploymentAgent(
+        kit_server_url=args.server,
+        mqtt_host=args.mqtt_host,
+        mqtt_port=args.mqtt_port,
+        auto_start_mqtt=not args.no_auto_mqtt
+    )
     agent.start()
 
 if __name__ == '__main__':
