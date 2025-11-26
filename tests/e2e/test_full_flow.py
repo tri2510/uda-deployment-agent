@@ -41,7 +41,18 @@ def test_full_flow():
 
     try:
         print("🔌 Connecting to Mock Kit Server at http://localhost:3091...")
-        sio.connect('http://localhost:3091')
+        # Add connection timeout and retry logic for container environments
+        for attempt in range(3):
+            try:
+                sio.connect('http://localhost:3091', transports=['polling'], socketio_path='socket.io')
+                break
+            except Exception as e:
+                print(f"⚠️  Connection attempt {attempt + 1} failed: {e}")
+                if attempt < 2:
+                    print("🔄 Retrying in 2 seconds...")
+                    time.sleep(2)
+                else:
+                    raise
 
         # Wait for UDA agent to connect (5 seconds)
         print("⏳ Waiting for UDA agent to connect...")
