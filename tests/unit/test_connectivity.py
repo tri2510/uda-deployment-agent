@@ -61,18 +61,44 @@ def check_uda_agent_running():
     except:
         return False
 
+def start_mock_server():
+    """Start Mock Kit Server for connectivity test"""
+    print("🚀 Starting Mock Kit Server for connectivity test...")
+
+    # Use absolute path to mock server
+    mock_server_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'tests', 'tools', 'mock_kit_server.py')
+
+    try:
+        process = subprocess.Popen([
+            sys.executable, mock_server_path
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # Wait for server to start
+        time.sleep(3)
+
+        if process.poll() is None:
+            print("✅ Mock Kit Server started successfully")
+            return process
+        else:
+            print("❌ Mock Kit Server failed to start")
+            return None
+    except Exception as e:
+        print(f"❌ Failed to start Mock Kit Server: {e}")
+        return None
+
 def start_uda_agent():
     """Start the UDA agent automatically"""
     print("🚀 Starting UDA Agent automatically...")
 
     # Change to the correct directory
-    uda_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    uda_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     os.chdir(uda_dir)
 
     try:
-        # Start UDA agent in background
+        # Start UDA agent in background with Mock Kit Server
+        uda_agent_path = os.path.join(uda_dir, 'src', 'uda_agent.py')
         process = subprocess.Popen([
-            sys.executable, 'src/uda_agent.py'
+            sys.executable, uda_agent_path, '--server', 'http://localhost:3091'
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Register cleanup function
@@ -115,6 +141,12 @@ if __name__ == "__main__":
     print("🧪 UDA Agent Connectivity Test with Auto-Start")
     print("=" * 60)
 
+    # Start Mock Kit Server first
+    mock_server = start_mock_server()
+    if not mock_server:
+        print("\n❌ Failed to start Mock Kit Server")
+        sys.exit(1)
+
     # Check if agent is already running
     if check_uda_agent_running():
         print("✅ UDA agent is already running!")
@@ -122,6 +154,8 @@ if __name__ == "__main__":
         print("🔍 UDA agent is not running, starting it automatically...")
         if not start_uda_agent():
             print("\n❌ Failed to start UDA agent")
+            # Cleanup Mock Kit Server
+            mock_server.terminate()
             sys.exit(1)
 
     # Test connectivity to Kit Server

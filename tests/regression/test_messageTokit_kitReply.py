@@ -135,7 +135,7 @@ def start_mock_server():
     print("🚀 Starting Mock Kit Server...")
 
     # Use absolute path to mock_kit_server.py
-    mock_server_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tools', 'mock_kit_server.py')
+    mock_server_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'tests', 'tools', 'mock_kit_server.py')
     process = subprocess.Popen([
         sys.executable, mock_server_path
     ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -158,18 +158,22 @@ def start_uda_agent():
     """Start UDA Agent"""
     print("🚀 Starting UDA Agent...")
 
-    # Change to parent directory
-    os.chdir('..')
+    # Change to parent directory (UDA Agent root)
+    uda_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    os.chdir(uda_dir)
 
+    uda_agent_path = os.path.join(uda_dir, 'src', 'uda_agent.py')
     process = subprocess.Popen([
-        sys.executable, 'src/uda_agent.py', '--server', 'http://localhost:3091'
+        sys.executable, uda_agent_path, '--server', 'http://localhost:3091'
     ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
        universal_newlines=True)
 
     atexit.register(lambda: cleanup_process(process, "UDA Agent"))
 
     # Change back to tests directory
-    os.chdir('tests')
+    tests_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    tests_dir = os.path.join(tests_dir, 'tests')
+    os.chdir(tests_dir)
 
     # Wait for agent to start and connect
     print(f"⏳ Waiting for UDA Agent to start and connect (PID: {process.pid})...")

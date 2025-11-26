@@ -71,7 +71,7 @@ def start_mock_server():
     """Start Mock Kit Server with logging"""
     print("🚀 Starting Mock Kit Server...")
 
-    mock_server_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tools', 'mock_kit_server.py')
+    mock_server_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'tests', 'tools', 'mock_kit_server.py')
     process = subprocess.Popen([
         sys.executable, mock_server_path
     ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -99,12 +99,13 @@ def start_uda_agent():
     """Start UDA Agent with logging"""
     print("🚀 Starting UDA Agent...")
 
-    os.chdir('..')
+    # Change to parent directory (UDA Agent root)
+    uda_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    uda_agent_path = os.path.join(uda_dir, 'src', 'uda_agent.py')
     process = subprocess.Popen([
-        sys.executable, 'src/uda_agent.py', '--server', 'http://localhost:3091'
+        sys.executable, uda_agent_path, '--server', 'http://localhost:3091'
     ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-       universal_newlines=True)
-    os.chdir('tests')
+       universal_newlines=True, cwd=uda_dir)
 
     def log_output():
         for line in iter(process.stdout.readline, ''):

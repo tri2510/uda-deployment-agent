@@ -107,7 +107,7 @@ def start_mock_server():
 
     try:
         # Start mock server in background
-        mock_server_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tools', 'mock_kit_server.py')
+        mock_server_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tests', 'tools', 'mock_kit_server.py')
         process = subprocess.Popen([
             sys.executable, mock_server_path
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -144,8 +144,9 @@ def start_uda_agent():
 
     try:
         # Start UDA agent in background pointing to mock server
+        uda_agent_path = os.path.join(uda_dir, 'src', 'uda_agent.py')
         process = subprocess.Popen([
-            sys.executable, 'src/uda_agent.py', '--server', 'http://localhost:3091'
+            sys.executable, uda_agent_path, '--server', 'http://localhost:3091'
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Register cleanup function
