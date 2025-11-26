@@ -161,7 +161,7 @@ class UniversalDeploymentAgent:
     def send_deployment_status(self, request_from, app_name, status_message, token=None, is_finish=False):
         """Send deployment status update"""
         message = f"Deploying {app_name}: {status_message}"
-        self.send_kit_server_reply(request_from, 'deploy_request', message, is_finish=is_finish, code=0, token=token)
+        self.send_kit_server_reply(request_from, 'deploy_request', message, is_done=is_finish, code=0, token=token)
 
     def send_app_output(self, request_from, app_name, output_line, cmd='run_python_app'):
         """Send real-time app output line"""
@@ -341,8 +341,14 @@ class UniversalDeploymentAgent:
             cmd = data.get('cmd', '')
             app_name = data.get('name', 'sdv-app')
 
-            # Get code - try convertedCode first, then code
-            code = data.get('convertedCode') or data.get('code', '')
+            # Get code - check multiple possible locations for code
+            code = (
+                data.get('convertedCode') or        # Top-level convertedCode (from Kit Manager)
+                data.get('code') or                 # Top-level code (from direct Frontend)
+                data.get('data', {}).get('code') or # Nested data.code (from SDV Syncer)
+                data.get('data', {}).get('convertedCode') or  # Nested data.convertedCode
+                ''
+            )
 
             if not code:
                 self._send_sdv_response(request_from, cmd, "No code provided", False, 1)
