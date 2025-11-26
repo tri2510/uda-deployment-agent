@@ -91,7 +91,7 @@ def start_mock_server():
     try:
         # Start mock server in background
         process = subprocess.Popen([
-            sys.executable, 'mock_kit_server.py'
+            sys.executable, '../tools/mock_kit_server.py'
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Register cleanup function

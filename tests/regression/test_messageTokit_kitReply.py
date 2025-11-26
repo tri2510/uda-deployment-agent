@@ -136,7 +136,7 @@ def start_mock_server():
 
     # Use original working mock_kit_server.py
     process = subprocess.Popen([
-        sys.executable, 'mock_kit_server.py'
+        sys.executable, '../tools/mock_kit_server.py'
     ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
        universal_newlines=True, cwd='.')
 

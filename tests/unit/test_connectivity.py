@@ -137,9 +137,9 @@ if __name__ == "__main__":
         print("   python3 tests/test_stop_python_app.py")
         print("   python3 tests/run_tests.py")
         print("\n💡 Or use mock server for local testing:")
-        print("   python3 tests/mock_kit_server.py &")
+        print("   python3 tests/tools/mock_kit_server.py &")
         print("   python3 src/uda_agent.py --server http://localhost:3091")
-        print("   python3 tests/test_runtime_info.py")
+        print("   python3 tests/integration/test_runtime_info.py")
     else:
         print("\n❌ UDA agent connectivity test failed!")
         print("💡 Consider using mock server for local testing")

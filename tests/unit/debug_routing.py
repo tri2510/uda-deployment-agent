@@ -72,7 +72,7 @@ def start_mock_debug():
 
     # Start mock server with output visible
     process = subprocess.Popen([
-        sys.executable, 'mock_kit_server.py'
+        sys.executable, '../tools/mock_kit_server.py'
     ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
        universal_newlines=True, bufsize=1)
 
