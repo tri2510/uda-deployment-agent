@@ -123,10 +123,10 @@ check_dependencies() {
     fi
 
     # Check UDA agent file
-    if [ -f "$SCRIPT_DIR/ultra-lightweight-uda-agent.py" ]; then
+    if [ -f "$SCRIPT_DIR/uda-agent.py" ]; then
         print_success "UDA Agent: Found"
     else
-        print_error "UDA Agent: Not found at $SCRIPT_DIR/ultra-lightweight-uda-agent.py"
+        print_error "UDA Agent: Not found at $SCRIPT_DIR/uda-agent.py"
         return 1
     fi
 
@@ -141,7 +141,7 @@ prepare_environment() {
     # Clean up any existing processes
     print_info "Cleaning up previous test processes..."
     pkill -f "mock_kit_server.py" 2>/dev/null || true
-    pkill -f "ultra-lightweight-uda-agent.py" 2>/dev/null || true
+    pkill -f "uda-agent.py" 2>/dev/null || true
 
     # Clean up Docker containers if Docker is available
     if command -v docker &> /dev/null && docker info &> /dev/null; then

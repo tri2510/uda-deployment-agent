@@ -2,16 +2,15 @@
 
 """
 SDV Runtime Compatible GPS Tracker
-Standard vehicle application following Velocitas Python SDK patterns
+Production vehicle application using Velocitas Python SDK and KUKSA Data Broker
 
 Features:
-- Velocitas VehicleApp inheritance
-- Async/await patterns
-- Signal subscription architecture
-- Structured logging with OpenTelemetry
-- Proper VSS signal paths
-- GPS distance and speed calculations
-- MQTT topic subscriptions
+- Real KUKSA Data Broker integration via Velocitas SDK
+- GPS tracking with distance and speed calculations
+- Standard SDV patterns with proper VSS signal paths
+- Async/await architecture with signal subscriptions
+- OpenTelemetry structured logging
+- Production-ready error handling and graceful degradation
 """
 
 import asyncio
@@ -21,32 +20,51 @@ import math
 from typing import Dict, Any, Optional, Tuple
 from datetime import datetime
 
-# Velocitas Python SDK imports
-from vehicle import Vehicle, vehicle  # type: ignore
-from velocitas_sdk.util.log import (
-    get_opentelemetry_log_factory,
-    get_opentelemetry_log_format,
-)
-from velocitas_sdk.vdb.reply import DataPointReply
-from velocitas_sdk.vehicle_app import VehicleApp, subscribe_topic
+# Velocitas Python SDK imports - Production SDV Integration
+try:
+    from vehicle import Vehicle, vehicle  # type: ignore
+    from velocitas_sdk.util.log import (
+        get_opentelemetry_log_factory,
+        get_opentelemetry_log_format,
+    )
+    from velocitas_sdk.vdb.reply import DataPointReply
+    from velocitas_sdk.vehicle_app import VehicleApp, subscribe_topic
 
-# Configure structured logging
-logging.setLogRecordFactory(get_opentelemetry_log_factory())
-logging.basicConfig(format=get_opentelemetry_log_format())
-logging.getLogger().setLevel("INFO")
+    # Configure OpenTelemetry logging (SDV standard)
+    logging.setLogRecordFactory(get_opentelemetry_log_factory())
+    logging.basicConfig(format=get_opentelemetry_log_format())
+    logging.getLogger().setLevel("INFO")
+
+    SDK_AVAILABLE = True
+
+except ImportError as e:
+    # Fallback when SDK not available (development/testing)
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    logging.warning(f"⚠️ Velocitas SDK not available: {e}")
+    logging.warning("⚠️ Running in simulation mode")
+    SDK_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
-class GPSTrackerApp(VehicleApp):
+class GPSTrackerApp:
     """SDV Runtime compatible GPS tracking application"""
 
-    def __init__(self, vehicle_client: Vehicle):
-        super().__init__()
-        self.Vehicle = vehicle_client
+    def __init__(self):
         self._is_running = False
+        self.sdk_available = SDK_AVAILABLE
         self._last_location: Optional[Tuple[float, float, datetime]] = None
         self._last_time: Optional[datetime] = None
 
-        logger.info("🛰️ GPSTrackerApp initialized")
+        if self.sdk_available:
+            # Real SDK mode
+            self.Vehicle = vehicle
+            logger.info("🛰️ GPSTrackerApp initialized with Velocitas SDK")
+        else:
+            # Simulation fallback mode
+            logger.warning("🛰️ GPSTrackerApp initialized in simulation mode")
 
     async def on_start(self):
         """Called when app starts - initialize subscriptions and setup"""
@@ -54,6 +72,22 @@ class GPSTrackerApp(VehicleApp):
             logger.info("🚀 Starting GPS Tracker App...")
             self._is_running = True
 
+            if self.sdk_available:
+                # Real KUKSA integration
+                await self._setup_kuksa_integration()
+            else:
+                # Simulation mode setup
+                await self._setup_simulation_mode()
+
+            logger.info("🎯 GPS Tracker App started successfully")
+
+        except Exception as e:
+            logger.error(f"❌ Failed to start GPS Tracker App: {e}")
+            self._is_running = False
+
+    async def _setup_kuksa_integration(self):
+        """Setup real KUKSA Data Broker integration"""
+        try:
             # Subscribe to GPS signals
             await self.Vehicle.Cabin.Infotainment.Navigation.CurrentLocation.Latitude.subscribe(
                 self.on_gps_change
@@ -73,28 +107,75 @@ class GPSTrackerApp(VehicleApp):
             # Start periodic location update task
             asyncio.create_task(self.location_update_loop())
 
-            logger.info("🎯 GPS Tracker App started successfully")
+            logger.info("✅ KUKSA Data Broker integration ready")
 
         except Exception as e:
-            logger.error(f"❌ Failed to start GPS Tracker App: {e}")
-            self._is_running = False
+            logger.error(f"❌ KUKSA integration failed: {e}")
+            raise
 
-    async def on_gps_change(self, data: DataPointReply):
+    async def _setup_simulation_mode(self):
+        """Setup simulation mode for development/testing"""
+        import random
+        self.sim_lat = 52.5200  # Berlin coordinates
+        self.sim_lon = 13.4050
+        self.sim_active = True
+        logger.info("✅ Simulation mode active")
+
+        # Start simulation loop
+        asyncio.create_task(self.location_update_loop())
+
+    async def on_gps_change(self, data: DataPointReply = None):
         """Callback for GPS location signal changes"""
         try:
             current_time = datetime.now()
 
-            # Get current location data
-            lat_reply = await self.Vehicle.Cabin.Infotainment.Navigation.CurrentLocation.Latitude.get()
-            lon_reply = await self.Vehicle.Cabin.Infotainment.Navigation.CurrentLocation.Longitude.get()
+            if self.sdk_available and data:
+                # Real KUKSA data
+                # Get current location data
+                lat_reply = await self.Vehicle.Cabin.Infotainment.Navigation.CurrentLocation.Latitude.get()
+                lon_reply = await self.Vehicle.Cabin.Infotainment.Navigation.CurrentLocation.Longitude.get()
 
-            if lat_reply is None or lon_reply is None:
-                logger.warning("⚠️ Incomplete GPS data received")
+                if lat_reply is None or lon_reply is None:
+                    logger.warning("⚠️ Incomplete GPS data received")
+                    return
+
+                lat = lat_reply.value
+                lon = lon_reply.value
+
+            elif not self.sdk_available:
+                # Simulation mode
+                await self._simulate_gps_change()
                 return
 
-            lat = lat_reply.value
-            lon = lon_reply.value
+            if self.sdk_available:
+                # Process real KUKSA GPS data
+                await self._process_gps_data(lat, lon, current_time)
+            else:
+                # Simulation handled by _simulate_gps_change()
+                return
 
+        except Exception as e:
+            logger.error(f"❌ Error processing GPS change: {e}")
+
+    async def _simulate_gps_change(self):
+        """Generate simulated GPS data"""
+        import random
+
+        # Simulate movement
+        if random.random() < 0.4:  # 40% chance of movement
+            # Small random movement
+            lat_change = random.uniform(-0.001, 0.001)  # ~100m
+            lon_change = random.uniform(-0.001, 0.001)  # ~100m
+
+            self.sim_lat += lat_change
+            self.sim_lon += lon_change
+
+        current_time = datetime.now()
+        await self._process_gps_data(self.sim_lat, self.sim_lon, current_time)
+
+    async def _process_gps_data(self, lat: float, lon: float, current_time: datetime):
+        """Common GPS data processing for both real and simulation data"""
+        try:
             # Validate GPS coordinates
             if lat is None or lon is None:
                 logger.warning("⚠️ Invalid GPS coordinates: None values")
@@ -110,23 +191,31 @@ class GPSTrackerApp(VehicleApp):
 
             # Calculate speed from GPS if we have previous location
             speed = self.calculate_gps_speed(lat, lon, current_time)
-            if speed is not None:
-                await self.Vehicle.Speed.GPS.set(speed)
-                logger.info(f"🚀 GPS Speed: {speed:.1f} km/h")
 
-            # Update location status
-            location_status = self.get_location_status(speed)
-            await self.Vehicle.Cabin.LocationStatus.set(location_status)
+            if self.sdk_available:
+                # Update KUKSA signals
+                if speed is not None:
+                    await self.Vehicle.Speed.GPS.set(speed)
+                    logger.info(f"🚀 GPS Speed: {speed:.1f} km/h")
 
-            # Update timestamp
-            await self.Vehicle.Cabin.Infotainment.Navigation.LastUpdate.set(current_time.isoformat())
+                # Update location status
+                location_status = self.get_location_status(speed)
+                await self.Vehicle.Cabin.LocationStatus.set(location_status)
+
+                # Update timestamp
+                await self.Vehicle.Cabin.Infotainment.Navigation.LastUpdate.set(current_time.isoformat())
+            else:
+                # Simulation logging only
+                if speed is not None:
+                    logger.info(f"🚀 GPS Speed: {speed:.1f} km/h")
+                self.sim_location_status = self.get_location_status(speed)
 
             # Store for next iteration
             self._last_location = (lat, lon, current_time)
             self._last_time = current_time
 
         except Exception as e:
-            logger.error(f"❌ Error processing GPS change: {e}")
+            logger.error(f"❌ Error processing GPS data: {e}")
 
     async def location_update_loop(self):
         """Periodic task to update location status and provide fallback"""

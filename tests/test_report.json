@@ -1,0 +1,123 @@
+{
+  "test_run": {
+    "start_time": "2025-11-26T09:42:19.494442",
+    "test_version": "1.0.0",
+    "host_info": {
+      "hostname": "HC-C-0057R",
+      "platform": "Linux",
+      "release": "6.5.0-26-generic",
+      "machine": "x86_64",
+      "cpu_count": 16,
+      "memory_total": 33295667200,
+      "memory_available": 18965155840,
+      "disk_total": 1003293966336
+    }
+  },
+  "non_docker_results": {
+    "mode": "non-docker",
+    "devices": {
+      "uda-nd-1": {
+        "id": "uda-nd-1",
+        "status": "running",
+        "pid": 3095621,
+        "startup_time": 4.005031585693359,
+        "performance": {
+          "cpu_usage": 5.4,
+          "memory_delta": 24797184,
+          "startup_time": 4.005031585693359
+        }
+      },
+      "uda-nd-2": {
+        "id": "uda-nd-2",
+        "status": "running",
+        "pid": 3095686,
+        "startup_time": 4.005053758621216,
+        "performance": {
+          "cpu_usage": 1.1,
+          "memory_delta": 16334848,
+          "startup_time": 4.005053758621216
+        }
+      },
+      "uda-nd-3": {
+        "id": "uda-nd-3",
+        "status": "running",
+        "pid": 3095744,
+        "startup_time": 4.0053465366363525,
+        "performance": {
+          "cpu_usage": -0.8000000000000003,
+          "memory_delta": 24920064,
+          "startup_time": 4.0053465366363525
+        }
+      }
+    },
+    "deployments": [],
+    "performance": {},
+    "status": "completed",
+    "total_time": 12.025272369384766
+  },
+  "docker_results": {
+    "mode": "docker",
+    "containers": {},
+    "deployments": [],
+    "performance": {},
+    "status": "skipped",
+    "reason": "Docker not available"
+  },
+  "performance_results": {
+    "system_baseline": {
+      "cpu_percent": 2.1,
+      "memory_total": 33295667200,
+      "memory_used": 13972226048,
+      "memory_percent": 43.1,
+      "disk_total": 1003293966336,
+      "disk_used": 789946392576,
+      "disk_percent": 83.0
+    },
+    "concurrent_connections": {
+      "max_concurrent_devices": 3,
+      "connection_time_avg": 0.5,
+      "connection_success_rate": 100.0
+    },
+    "memory_usage": {
+      "memory_samples": [
+        13972226048,
+        13975724032,
+        13980569600,
+        13859823616,
+        13860761600
+      ],
+      "memory_average": 13929820979.2,
+      "memory_peak": 13980569600,
+      "memory_variance": 120745984
+    },
+    "network_latency": {
+      "latency_samples": [
+        1.422882080078125,
+        1.6491413116455078,
+        1.6126632690429688,
+        1.500844955444336,
+        1.4410018920898438,
+        1.504659652709961,
+        1.4429092407226562,
+        1.4836788177490234,
+        1.489400863647461,
+        1.5194416046142578
+      ],
+      "latency_avg": 1.506662368774414,
+      "latency_min": 1.422882080078125,
+      "latency_max": 1.6491413116455078,
+      "latency_p95": 1.6491413116455078
+    }
+  },
+  "summary": {
+    "overall_status": "passed",
+    "tests_run": 2,
+    "tests_passed": 1,
+    "tests_failed": 0,
+    "tests_skipped": 1,
+    "total_devices": 3,
+    "total_deployments": 0,
+    "total_time": 12.025272369384766
+  },
+  "generated_at": "2025-11-26T09:42:44.572637"
+}

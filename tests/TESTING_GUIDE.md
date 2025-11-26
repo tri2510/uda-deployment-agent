@@ -188,7 +188,7 @@ pkill -f "mock_kit_server.py"
 #### **UDA Agent Not Found**
 ```bash
 # Check if UDA agent exists
-ls -la ultra-lightweight-uda-agent.py
+ls -la uda-agent.py
 
 # Make sure you're in the right directory
 pwd  # Should be .../uda-agent
@@ -211,7 +211,7 @@ tail -f tests/test_output.log
 python3 tests/mock_kit_server.py
 
 # Test UDA agent manually
-KIT_SERVER_URL=http://localhost:3090 python3 ultra-lightweight-uda-agent.py
+KIT_SERVER_URL=http://localhost:3090 python3 uda-agent.py
 ```
 
 ## 🔧 Advanced Usage
@@ -271,7 +271,7 @@ run_uda_tests.sh              # Main shell script
 ├── isolated_test_runner.py      # Quick isolated tests
 ├── mock_kit_server.py          # Simulated Kit Server
 ├── test_framework.py           # Original comprehensive framework
-└── ultra-lightweight-uda-agent.py  # UDA being tested
+└── uda-agent.py  # UDA being tested
 ```
 
 ### **Test Flow**

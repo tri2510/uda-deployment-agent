@@ -8,7 +8,7 @@ set -e
 echo "🚀 Starting SDV Runtime Compatible UDA Demo Setup..."
 
 # Check if we're in the right directory
-if [ ! -f "ultra-lightweight-uda-agent.py" ]; then
+if [ ! -f "uda-agent.py" ]; then
     echo "❌ Error: Please run this script from the uda-agent directory"
     exit 1
 fi
@@ -161,7 +161,7 @@ echo ""
 
 echo "📊 Image Size Comparison:"
 echo "========================"
-echo "Ultra-lightweight UDA:    ~25MB (no Velocitas SDK)"
+echo "UDA Agent:                Production-ready with Velocitas SDK"
 echo "SDV Compatible UDA:       ~50MB (with Velocitas SDK)"
 echo "Full SDV Runtime:         ~500MB+"
 echo ""

@@ -4,7 +4,7 @@ SDV Runtime compatible Python deployment agent for vehicle applications that con
 
 ## 🎯 Overview
 
-The UDA provides a **SDV Runtime compatible solution** (~50MB, 150 LOC) for deploying and running Python vehicle applications following official SDV patterns with Velocitas SDK integration while maintaining a much smaller footprint than full SDV Runtime.
+The UDA provides a **SDV Runtime compatible solution** for deploying and running Python vehicle applications following official SDV patterns with Velocitas SDK integration while maintaining a much smaller footprint than full SDV Runtime.
 
 ## 🏗️ Architecture
 
@@ -12,9 +12,9 @@ The UDA provides a **SDV Runtime compatible solution** (~50MB, 150 LOC) for depl
 ┌─────────────────┐    Socket.IO    ┌──────────────────────┐
 │   Python UDA    │ ───────────────→ │   Kit Server Adapter │
 │   Agent         │                  │                      │
-│ • ~150 LOC      │                  │ • Protocol Bridge    │
-│ • ~50MB memory  │                  │ • Already running    │
-│ • Velocitas SDK │                  └──────────────────────┘
+│ • Production    │                  │ • Protocol Bridge    │
+│ • Velocitas SDK │                  │ • Already running    │
+│ • KUKSA Ready   │                  └──────────────────────┘
 └─────────────────┘                          │
          │                                   │
          │                                   ▼
@@ -29,9 +29,9 @@ The UDA provides a **SDV Runtime compatible solution** (~50MB, 150 LOC) for depl
 ## 🚀 Key Features
 
 ### SDV Runtime Compatible
-- **Size**: ~150 lines of Python code
-- **Memory**: ~50MB RAM usage
-- **Startup**: 10 seconds (SDK initialization)
+- **Size**: Production-ready Python agent
+- **Memory**: Optimized RAM usage
+- **Startup**: Fast initialization
 - **Dependencies**: Velocitas SDK + Socket.IO
 
 ### Maximum Compatibility
@@ -64,7 +64,7 @@ cd uda-deployment-platform/uda-agent
 pip install -r requirements.txt
 
 # Run the agent
-python3 ultra-lightweight-uda-agent.py
+python3 uda-agent.py
 ```
 
 ### Docker Setup
@@ -137,7 +137,7 @@ if __name__ == "__main__":
 uda-agent/
 ├── README.md                          # This file
 ├── requirements.txt                   # Python dependencies
-├── ultra-lightweight-uda-agent.py     # Main agent (~50 LOC)
+├── uda-agent.py                       # Main agent
 ├── Dockerfile                         # Docker containerization
 ├── demo-apps/                         # Sample vehicle apps
 │   ├── speed-monitor.py              # Speed monitoring app

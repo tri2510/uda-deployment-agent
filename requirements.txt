@@ -1,22 +1,30 @@
-# SDV Runtime Compatible Requirements
-# Includes Velocitas Python SDK for full SDV ecosystem integration
+# SDV Runtime Compatible Requirements - Production Ready
+# Full Velocitas Python SDK integration with KUKSA Data Broker
 
 # Core Velocitas SDK
 velocitas-sdk==0.9.0
 
-# Additional dependencies for SDV compatibility
+# Vehicle signal access and KUKSA integration
+vehicle-app-sdk>=0.8.0
+
+# Socket.IO for Kit Server communication
 python-socketio==5.8.0
 requests==2.31.0
 
-# Async runtime and utilities
+# Async runtime and MQTT for KUKSA communication
 asyncio-mqtt==0.16.1
 aiohttp==3.9.0
+grpcio==1.59.0
+grpcio-tools==1.59.0
 
 # Data validation and processing
 pydantic==2.5.0
 typing-extensions==4.8.0
 
-# OpenTelemetry for structured logging
+# OpenTelemetry for structured logging (SDV standard)
 opentelemetry-api==1.21.0
 opentelemetry-sdk==1.21.0
 opentelemetry-exporter-otlp==1.21.0
+
+# Additional utilities
+protobuf==4.25.1

@@ -179,7 +179,7 @@ class ComprehensiveUDATester:
                 env['KUKSA_URL'] = 'http://localhost:55555'
 
                 process = subprocess.Popen([
-                    sys.executable, 'ultra-lightweight-uda-agent.py'
+                    sys.executable, 'uda-agent.py'
                 ], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
                 self.uda_processes[device_id] = process
