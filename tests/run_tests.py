@@ -50,7 +50,8 @@ def main():
         ("test_runtime_info.py", "Runtime Info Test"),
         ("test_deploy_request.py", "Deploy Request Test"),
         ("test_run_python_app.py", "Run Python App Test"),
-        ("test_stop_python_app.py", "Stop Python App Test")
+        ("test_stop_python_app.py", "Stop Python App Test"),
+        ("test_output_to_kitserver.py", "Output Messages to Kit Server Test")
     ]
 
     for test_file, description in tests:

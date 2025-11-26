@@ -41,7 +41,13 @@ Tests the `stop_python_app` command to stop running applications.
 python3 test_stop_python_app.py
 ```
 
-### 6. **run_tests.py**
+### 6. **test_output_to_kitserver.py**
+Tests UDA agent's ability to send output messages back to Kit Server.
+```bash
+python3 test_output_to_kitserver.py
+```
+
+### 7. **run_tests.py**
 Runs all tests in sequence.
 ```bash
 python3 run_tests.py
@@ -130,6 +136,15 @@ The tests send messages in SDV runtime format:
 - Sends `stop_python_app` command
 - Stops previously deployed app
 - Shows graceful shutdown
+
+### Output Messages to Kit Server Test
+- Sends `run_python_app` command with output-generating code
+- Tests UDA agent's ability to send various types of messages back to Kit Server
+- Verifies bidirectional communication including:
+  - Status updates during execution
+  - Log messages and output
+  - Execution results and error messages
+  - Real-time streaming capabilities
 
 ## 🐛 Troubleshooting
 

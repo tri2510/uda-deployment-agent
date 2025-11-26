@@ -51,6 +51,9 @@ class UniversalDeploymentAgent:
         self.runtime_name = self._get_or_generate_runtime_name()
         self.device_id = f"Runtime-{self.runtime_name}"
 
+        # Track active requests for stdout streaming
+        self.active_requests = {}  # {request_id: {app_name, cmd, request_from}}
+
         logger.info(f"🚀 Initializing UDA Agent")
         logger.info(f"🏷️  Runtime Name: {self.runtime_name}")
         logger.info(f"🆔 Kit ID: {self.device_id}")
@@ -106,6 +109,123 @@ class UniversalDeploymentAgent:
             logger.info(f"📨 Kit Server Event: {event}")
             if data:
                 logger.debug(f"📦 Data: {data}")
+
+    # Kit Server Compatible Helper Methods
+    def send_kit_server_reply(self, request_from, cmd, result, is_done=True, code=0, token=None):
+        """Send Kit Server compatible messageToKit-kitReply response"""
+        message = {
+            'kit_id': self.device_id,
+            'request_from': request_from,
+            'cmd': cmd,
+            'data': '',
+            'result': result,
+            'isDone': is_done,
+            'code': code
+        }
+
+        # Add token for deployment operations
+        if token:
+            message['token'] = token
+
+        logger.info(f"📤 Sending Kit Server reply: {cmd} -> {result[:100]}{'...' if len(result) > 100 else ''}")
+        print(f"🐛 DEBUG: About to emit messageToKit-kitReply event")
+        self.sio.emit('messageToKit-kitReply', message)
+        print(f"🐛 DEBUG: messageToKit-kitReply event emitted successfully")
+
+    def send_deployment_status(self, request_from, app_name, status_message, token=None, is_finish=False):
+        """Send deployment status update"""
+        message = f"Deploying {app_name}: {status_message}"
+        self.send_kit_server_reply(request_from, 'deploy_request', message, is_finish=is_finish, code=0, token=token)
+
+    def send_app_output(self, request_from, app_name, output_line, cmd='run_python_app'):
+        """Send real-time app output line"""
+        # Format output line with app context
+        formatted_output = f"[{app_name}] {output_line.rstrip()}"
+        self.send_kit_server_reply(request_from, cmd, formatted_output, is_done=False, code=0)
+
+    def send_runtime_state(self):
+        """Send runtime state update"""
+        state_data = {
+            'noOfRunner': len(self.running_apps),
+            'noOfApiSubscriber': 0,  # Could be implemented later
+            'apps': list(self.running_apps.keys())
+        }
+
+        message = {
+            'kit_id': self.device_id,
+            'data': state_data
+        }
+
+        logger.info(f"📊 Sending runtime state: {len(self.running_apps)} running apps")
+        self.sio.emit('report-runtime-state', message)
+
+    def stream_app_output(self, request_from, app_name, process, cmd='run_python_app'):
+        """Stream app output in real-time using proper Kit Server format"""
+        import threading
+        import queue
+
+        output_queue = queue.Queue()
+
+        def stdout_reader():
+            """Read stdout and put lines in queue"""
+            try:
+                for line in iter(process.stdout.readline, ''):
+                    if line:
+                        output_queue.put(('stdout', line))
+            except Exception as e:
+                logger.error(f"❌ Error reading stdout for {app_name}: {e}")
+            finally:
+                output_queue.put(('done', None))
+
+        def stderr_reader():
+            """Read stderr and put lines in queue"""
+            try:
+                for line in iter(process.stderr.readline, ''):
+                    if line:
+                        output_queue.put(('stderr', line))
+            except Exception as e:
+                logger.error(f"❌ Error reading stderr for {app_name}: {e}")
+            finally:
+                output_queue.put(('done', None))
+
+        def output_streamer():
+            """Stream output to Kit Server"""
+            readers_done = 0
+            while readers_done < 2:
+                try:
+                    stream_type, line = output_queue.get(timeout=1)
+                    if stream_type == 'done':
+                        readers_done += 1
+                    elif line:
+                        # Send each line immediately to Kit Server
+                        prefix = f"[{app_name}:{stream_type.upper()}]"
+                        formatted_line = f"{prefix} {line.rstrip()}"
+                        self.send_app_output(request_from, app_name, formatted_line, cmd)
+
+                        # Also log locally
+                        logger.info(f"📋 {formatted_line}")
+
+                except queue.Empty:
+                    continue
+                except Exception as e:
+                    logger.error(f"❌ Error streaming output for {app_name}: {e}")
+                    break
+
+        # Start reader threads
+        stdout_thread = threading.Thread(target=stdout_reader, daemon=True)
+        stderr_thread = threading.Thread(target=stderr_reader, daemon=True)
+        streamer_thread = threading.Thread(target=output_streamer, daemon=True)
+
+        stdout_thread.start()
+        stderr_thread.start()
+        streamer_thread.start()
+
+        return {
+            'stdout_thread': stdout_thread,
+            'stderr_thread': stderr_thread,
+            'streamer_thread': streamer_thread,
+            'output_queue': output_queue
+        }
 
         @self.sio.event
         def deploy_app(data):
@@ -235,6 +355,13 @@ class UniversalDeploymentAgent:
             with open(app_file, 'w') as f:
                 f.write(code)
 
+            # Generate deployment token
+            import uuid
+            deployment_token = str(uuid.uuid4())[:8]
+
+            # Send initial deployment status
+            self.send_deployment_status(request_from, app_name, "Starting deployment", deployment_token, False)
+
             # Execute the app
             log_file = os.path.join(self.log_dir, f"{app_name}.log")
 
@@ -247,27 +374,19 @@ class UniversalDeploymentAgent:
             })
 
             # Execute with python -u for unbuffered output
-            with open(log_file, 'w') as log_fh:
-                process = subprocess.Popen(
-                    [sys.executable, '-u', app_file],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                    env=env,
-                    universal_newlines=True
-                )
+            process = subprocess.Popen(
+                [sys.executable, '-u', app_file],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                env=env,
+                universal_newlines=True
+            )
 
-                # Start output capture thread
-                import threading
-                def capture_output():
-                    for line in iter(process.stdout.readline, ''):
-                        if line:
-                            log_fh.write(line)
-                            log_fh.flush()
-                            logger.info(f"📋 [{app_name}] {line.strip()}")
+            self.send_deployment_status(request_from, app_name, f"Process started (PID: {process.pid})", deployment_token, False)
 
-                output_thread = threading.Thread(target=capture_output, daemon=True)
-                output_thread.start()
+            # Start real-time output streaming to Kit Server
+            stream_info = self.stream_app_output(request_from, app_name, process, cmd)
 
             # Track running app
             self.running_apps[app_name] = {
@@ -275,11 +394,19 @@ class UniversalDeploymentAgent:
                 'file': app_file,
                 'log_file': log_file,
                 'started_at': datetime.now().isoformat(),
-                'thread': output_thread,
-                'request_from': request_from
+                'stream_info': stream_info,
+                'cmd': cmd,
+                'request_from': request_from,
+                'deployment_token': deployment_token
             }
 
-            logger.info(f"✅ SDV App deployed: {app_name} (PID: {process.pid})")
+            # Send runtime state update
+            self.send_runtime_state()
+
+            # Send final deployment status
+            self.send_deployment_status(request_from, app_name, "Deployment completed", deployment_token, True)
+
+            logger.info(f"✅ SDV App deployed: {app_name} (PID: {process.pid}) - Streaming output enabled")
 
             # Send success response
             if cmd == 'run_python_app':
@@ -339,14 +466,8 @@ class UniversalDeploymentAgent:
                 'status': 'online'
             }
 
-            # Send status response
-            self.sio.emit('messageToKit', {
-                'request_from': request_from,
-                'cmd': 'get-runtime-info',
-                'result': status_data,
-                'is_finish': True,
-                'code': 0
-            })
+            # Send status response using Kit Server compatible format
+            self.send_kit_server_reply(request_from, 'get-runtime-info', json.dumps(status_data), is_done=True, code=0)
 
             logger.info(f"📊 SDV Runtime status sent")
 
@@ -356,16 +477,8 @@ class UniversalDeploymentAgent:
 
     def _send_sdv_response(self, request_from, cmd, result, success, return_code):
         """Send SDV runtime compatible response"""
-        response = {
-            'request_from': request_from,
-            'cmd': cmd,
-            'result': result,
-            'is_finish': True,
-            'code': return_code,
-            'isDone': True
-        }
-
-        self.sio.emit('messageToKit', response)
+        print(f"🐛 DEBUG: _send_sdv_response called - about to call send_kit_server_reply")
+        self.send_kit_server_reply(request_from, cmd, result, is_done=True, code=return_code)
         logger.info(f"📤 SDV Response sent: {cmd} -> {result}")
 
     def _get_or_generate_runtime_name(self):
