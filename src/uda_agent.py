@@ -2,12 +2,12 @@
 
 """
 Universal Deployment Agent
-Production-ready UDA for vehicle applications
+UDA for vehicle applications
 
 Features:
 - Socket.IO communication with Kit Server Adapter
 - Full Velocitas SDK integration for KUKSA Data Broker
-- Production-ready error handling and logging
+- Comprehensive error handling and logging
 - Support for SDV vehicle applications
 - Docker and baremetal deployment support
 - Real-time app deployment and management
@@ -192,7 +192,7 @@ class UniversalDeploymentAgent:
             env.update({
                 'KUKSA_DATA_BROKER_ADDRESS': os.environ.get('KUKSA_DATA_BROKER_ADDRESS', 'localhost:55555'),
                 'VEHICLE_APP_SDK_CONFIG_PATH': os.environ.get('VEHICLE_APP_SDK_CONFIG_PATH', '/app/vehicle-app-sdk-config.json'),
-                'SDV_MODE': os.environ.get('SDV_MODE', 'production'),
+                'SDV_MODE': os.environ.get('SDV_MODE', 'standard'),
                 'LOG_LEVEL': os.environ.get('LOG_LEVEL', 'INFO'),
                 'UDA_APP_NAME': app_name,
                 'UDA_AGENT_ID': self.device_id

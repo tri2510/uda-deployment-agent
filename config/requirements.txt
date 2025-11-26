@@ -1,4 +1,4 @@
-# SDV Runtime Compatible Requirements - Production Ready
+# SDV Runtime Compatible Requirements
 # Full Velocitas Python SDK integration with KUKSA Data Broker
 
 # Core Velocitas SDK

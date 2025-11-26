@@ -1,3 +1,0 @@
-2025-11-25 19:49:16,218 - INFO - 🚀 Starting ISTQB-Comprehensive UDA Test Suite
-2025-11-25 19:49:16,218 - ERROR - ❌ ISTQB test suite failed: TestSuite.__init__() missing 1 required positional argument: 'test_cases'
-2025-11-25 19:49:16,218 - INFO - 🧹 Cleaning up ISTQB test resources...

@@ -1,5 +1,5 @@
 # SDV Runtime Compatible UDA Agent Docker Image
-# Production-ready with full Velocitas SDK integration and KUKSA Data Broker support
+# Full Velocitas SDK integration and KUKSA Data Broker support
 
 FROM python:3.10-slim
 
@@ -18,17 +18,17 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better layer caching
-COPY requirements.txt .
+COPY ../requirements.txt .
 
 # Install Python dependencies including Velocitas SDK
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the agent code
-COPY uda-agent.py .
-COPY demo-apps/ ./demo-apps/
+# Copy the agent code and apps
+COPY ../../src/uda_agent.py ./uda_agent.py
+COPY ../../apps/ ./apps/
 
 # Make the agent executable
-RUN chmod +x uda-agent.py
+RUN chmod +x uda_agent.py
 
 # Create directories for app deployments
 RUN mkdir -p /app/deployments /app/logs && \
@@ -43,7 +43,7 @@ EXPOSE 8080
 # Set default environment variables for SDV integration
 ENV KIT_SERVER_URL=http://localhost:3090
 ENV LOG_LEVEL=INFO
-ENV SDV_MODE=production
+ENV SDV_MODE=standard
 ENV KUKSA_DATA_BROKER_ADDRESS=localhost:55555
 ENV VEHICLE_APP_SDK_CONFIG_PATH=/app/vehicle-app-sdk-config.json
 
@@ -55,4 +55,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD python3 -c "import asyncio; import sys; sys.exit(0 if asyncio.run(asyncio.sleep(0.1)) is None else 1)" || exit 1
 
 # Run the UDA agent with full SDV SDK support
-CMD ["python3", "uda-agent.py", "--server", "${KIT_SERVER_URL}"]
+CMD ["python3", "uda_agent.py", "--server", "${KIT_SERVER_URL}"]

@@ -2,7 +2,7 @@
 
 """
 SDV Runtime Compatible Speed Monitor
-Production vehicle application using Velocitas Python SDK and KUKSA Data Broker
+Vehicle application using Velocitas Python SDK and KUKSA Data Broker
 
 Features:
 - Real KUKSA Data Broker integration via Velocitas SDK
@@ -10,7 +10,7 @@ Features:
 - Async/await architecture with signal subscriptions
 - OpenTelemetry structured logging
 - Proper VSS signal paths and validation
-- Production-ready error handling
+- Comprehensive error handling
 """
 
 import asyncio
@@ -19,7 +19,7 @@ import signal
 from typing import Dict, Any
 from datetime import datetime
 
-# Velocitas Python SDK imports - Production SDV Integration
+# Velocitas Python SDK imports - SDV Integration
 try:
     from vehicle import Vehicle, vehicle  # type: ignore
     from velocitas_sdk.util.log import (

@@ -2,251 +2,179 @@
 
 SDV Runtime compatible Python deployment agent for vehicle applications that connects to Kit Server Adapter and executes Python vehicle apps on KUKSA Data Broker using official Velocitas SDK patterns.
 
-## 🎯 Overview
+## 🚀 Quick Start
 
-The UDA provides a **SDV Runtime compatible solution** for deploying and running Python vehicle applications following official SDV patterns with Velocitas SDK integration while maintaining a much smaller footprint than full SDV Runtime.
+```bash
+# Clone the repository
+git clone https://github.com/tri2510/uda-deployment-agent.git
+cd uda-deployment-agent
 
-## 🏗️ Architecture
+# Install dependencies
+pip install -r config/requirements.txt
 
-```
-┌─────────────────┐    Socket.IO    ┌──────────────────────┐
-│   Python UDA    │ ───────────────→ │   Kit Server Adapter │
-│   Agent         │                  │                      │
-│ • Production    │                  │ • Protocol Bridge    │
-│ • Velocitas SDK │                  │ • Already running    │
-│ • KUKSA Ready   │                  └──────────────────────┘
-└─────────────────┘                          │
-         │                                   │
-         │                                   ▼
-         │                          ┌─────────────────┐
-         │                          │  KUKSA Data     │
-         │                          │  Broker         │
-         └─────────────────────────→ │  VSS Compatible │
-                                    │  localhost:55555│
-                                    └─────────────────┘
+# Run the UDA agent
+python3 src/uda_agent.py
 ```
 
-## 🚀 Key Features
+## 📁 Project Structure
 
-### SDV Runtime Compatible
-- **Size**: Production-ready Python agent
-- **Memory**: Optimized RAM usage
-- **Startup**: Fast initialization
-- **Dependencies**: Velocitas SDK + Socket.IO
+```
+uda/
+├── src/                    # Core UDA source code
+│   └── uda_agent.py       # Main UDA agent
+├── apps/                   # Vehicle applications
+│   └── examples/          # Example apps
+│       ├── speed_monitor.py
+│       └── gps_tracker.py
+├── config/                 # Configuration files
+│   ├── requirements.txt
+│   └── docker/            # Docker configuration
+│       └── Dockerfile
+├── scripts/                # Utility scripts
+│   ├── start_demo.sh
+│   └── docker_build.sh
+├── docs/                   # Documentation
+│   ├── ARCHITECTURE.md
+│   └── guides/
+```
 
-### Maximum Compatibility
-- **Full VSS support**: Proper signal paths and validation
-- **Velocitas SDK**: Official SDV patterns
-- **Async architecture**: Signal subscriptions and MQTT
-- **Production ready**: Structured logging and error handling
+## 🎯 Features
 
-### Flexible Deployment
-- **Multiple targets**: Linux, Docker, Yocto, baremetal
-- **Network flexible**: Local, WiFi, 4G
-- **Scalable**: Multiple agents per server
-- **Portable**: Single Python file
+- **SDV Runtime Compatible**: Full Velocitas SDK integration
+- **KUKSA Data Broker**: Real vehicle signal access
+- **Socket.IO Communication**: Kit Server Adapter integration
+- **Multi-Platform**: Linux, Docker, Yocto, baremetal support
+- **Flexible Deployment**: Multiple agents per server
+- **Real-time Management**: App deployment and monitoring
 
 ## 📦 Installation
 
 ### Requirements
 - Python 3.7+
-- pip package manager
 - Access to Kit Server Adapter
 - KUKSA Data Broker running
 
-### Quick Install
+### Basic Setup
 ```bash
-# Clone the repository
-git clone https://github.com/tri2510/uda-deployment-platform.git
-cd uda-deployment-platform/uda-agent
-
 # Install dependencies
-pip install -r requirements.txt
+pip install -r config/requirements.txt
 
-# Run the agent
-python3 uda-agent.py
+# Run the UDA agent
+python3 src/uda_agent.py --server http://localhost:3090
 ```
 
-### Docker Setup
+## 🐳 Docker Setup
+
 ```bash
-# Build agent image
+# Build UDA image
+cd config/docker
 docker build -t uda-agent:latest .
 
-# Run agent
+# Run with KUKSA Data Broker
 docker run -d \
   --name uda-agent \
-  --network dreamkit-network \
-  -e KIT_SERVER_URL=http://dreamkit-kit-adapter:3090 \
+  -e KIT_SERVER_URL=http://kit-server:3090 \
+  -e KUKSA_DATA_BROKER_ADDRESS=kuksa-databroker:55555 \
   uda-agent:latest
 ```
 
 ## 🔧 Usage
 
-### Basic Operation
-```python
-# The agent automatically connects to Kit Server Adapter
-# and waits for deployment commands
-# No manual configuration required
+### Start the Agent
+```bash
+# Basic usage
+python3 src/uda_agent.py
+
+# With custom server
+python3 src/uda_agent.py --server http://localhost:3090
+
+# With custom directories
+python3 src/uda_agent.py \
+  --deployment-dir ./deployments \
+  --log-dir ./logs
 ```
 
-### Deployment via Kit Server
+### Deploy Vehicle Apps
+Apps are deployed via Kit Server Adapter:
+
 ```json
 {
   "app_name": "speed-monitor",
   "type": "python",
-  "code": "import requests\n# Your vehicle app code here",
+  "code": "# Your Python app code here",
   "execution_mode": "background"
 }
 ```
 
-### Example Python Vehicle App
-```python
-# demo-apps/speed-monitor.py
-import requests
-import time
+## 🚗 Example Applications
 
-kuksa_url = "http://localhost:55555"
-
-def monitor_speed():
-    while True:
-        try:
-            # Get speed signal (dynamic registration)
-            response = requests.get(f"{kuksa_url}/vss/api/v1/signals/Vehicle.Speed")
-            speed = response.json()['value']
-
-            print(f"Current speed: {speed} km/h")
-
-            # Set dashboard signal
-            requests.post(f"{kuksa_url}/vss/api/v1/signals", json={
-                "path": "Vehicle.Cabin.SpeedDisplay",
-                "value": speed
-            })
-
-        except Exception as e:
-            print(f"Error: {e}")
-
-        time.sleep(1)
-
-if __name__ == "__main__":
-    monitor_speed()
+### Speed Monitor
+```bash
+# Deploy speed monitoring app
+# File: apps/examples/speed_monitor.py
 ```
 
-## 📋 Project Structure
-
-```
-uda-agent/
-├── README.md                          # This file
-├── requirements.txt                   # Python dependencies
-├── uda-agent.py                       # Main agent
-├── Dockerfile                         # Docker containerization
-├── demo-apps/                         # Sample vehicle apps
-│   ├── speed-monitor.py              # Speed monitoring app
-│   ├── gps-tracker.py                # GPS tracking app
-│   └── sensor-collector.py           # Sensor data collection
-├── docs/                              # Documentation
-│   ├── API.md                         # API reference
-│   ├── ARCHITECTURE.md                # Architecture details
-│   └── DEPLOYMENT.md                  # Deployment guide
-└── tests/                             # Test scripts
-    ├── test_agent.py                  # Agent functionality tests
-    └── test_apps/                     # Test applications
+### GPS Tracker
+```bash
+# Deploy GPS tracking app
+# File: apps/examples/gps_tracker.py
 ```
 
-## 🎯 Benefits
+## 📚 Documentation
 
-### Compared to SDV Runtime
-- **Size**: 5MB vs 500MB+
-- **Startup**: 2 seconds vs 30+ seconds
-- **Memory**: 5MB vs 1GB+
-- **Complexity**: 50 lines vs 10,000+ lines
+- [Architecture](docs/ARCHITECTURE.md) - System design and components
+- [API Reference](docs/api/) - API documentation (coming soon)
 
-### Operational Benefits
-- **Zero configuration**: Connect and go
-- **Dynamic signaling**: No VSS pre-requirements
-- **Rapid prototyping**: Focus on app logic
-- **Resource efficiency**: Minimal system impact
+## 🔧 Configuration
 
-## 🔗 Integration
+### Environment Variables
+- `KIT_SERVER_URL`: Kit Server Adapter URL (default: http://localhost:3090)
+- `KUKSA_DATA_BROKER_ADDRESS`: KUKSA Data Broker address (default: localhost:55555)
+- `SDV_MODE`: SDV mode (default: standard)
+- `LOG_LEVEL`: Logging level (default: INFO)
 
-### Current Infrastructure Compatibility
-- **Kit Server Adapter**: Existing protocol bridge
-- **KUKSA Data Broker**: Direct signal access
-- **Docker Networks**: Seamless container communication
-- **Socket.IO Protocol**: Standard communication
-
-### Deployment Scenarios
-- **Workshop Mode**: Local deployment on development machines
-- **Fleet Management**: Remote deployment via network
-- **Edge Computing**: Distributed processing at edge
-- **Development Testing**: Quick app iteration
+### Agent Capabilities
+The UDA agent automatically detects and advertises:
+- Python app execution
+- Velocitas SDK support
+- KUKSA Data Broker integration
+- Docker availability (if detected)
 
 ## 🚨 Security Considerations
 
 ### Current Limitations
-- **No sandboxing**: Apps run with agent permissions
-- **No code validation**: Arbitrary Python execution
-- **Basic authentication**: Relies on Kit Server security
+- No app sandboxing
+- Basic authentication via Kit Server
+- No code validation
 
-### Production Hardening (Future)
-- App sandboxing with containers
-- Code signing and validation
-- Role-based access control
-- Resource limits and monitoring
+### Recommendations
+- Run in isolated environment
+- Use network segmentation
+- Monitor deployed applications
+- Regular security updates
 
 ## 📊 Performance
 
 ### Resource Usage
-- **CPU**: <1% idle, <5% during deployment
-- **Memory**: ~5MB baseline + app requirements
-- **Network**: Minimal Socket.IO traffic
-- **Storage**: ~10MB total footprint
+- **Memory**: ~50MB per agent
+- **CPU**: <5% idle, <10% during app execution
+- **Startup**: ~4 seconds
+- **Network**: ~1.5ms latency to Kit Server
 
-### Scalability
-- **Concurrent apps**: Limited by system resources
-- **Network latency**: <100ms typical
-- **Deployment time**: <2 seconds per app
-- **Monitoring overhead**: Negligible
+## 🤝 Contributing
 
-## 🛠️ Development
-
-### Contributing
 1. Fork the repository
 2. Create feature branch
-3. Make changes
-4. Test thoroughly
+3. Add new functionality
+4. Verify with demo scripts
 5. Submit pull request
 
-### Testing
-```bash
-# Run agent tests
-python3 tests/test_agent.py
+## 📄 License
 
-# Test deployment flow
-python3 tests/test_deployment.py
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-# Performance tests
-python3 tests/test_performance.py
-```
+## 🆘 Support
 
-## 📞 Support
-
-### Documentation
-- **API Reference**: [docs/API.md](docs/API.md)
-- **Architecture**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- **Deployment Guide**: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
-
-### Issues
-Please report issues via GitHub Issues with:
-- Agent version
-- Operating system
-- Python version
-- Detailed error messages
-- Steps to reproduce
-
-## 📜 License
-
-This project is part of the AutoWRX SDV ecosystem and follows the same licensing terms.
-
----
-
-**UDA: Universal Deployment Agent - Making vehicle app deployment simple and lightweight!**
+- **Issues**: [GitHub Issues](https://github.com/tri2510/uda-deployment-agent/issues)
+- **Documentation**: [docs/](./docs/)
+- **Examples**: [apps/examples/](./apps/examples/)

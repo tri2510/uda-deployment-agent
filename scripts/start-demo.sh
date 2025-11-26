@@ -8,8 +8,8 @@ set -e
 echo "🚀 Starting SDV Runtime Compatible UDA Demo Setup..."
 
 # Check if we're in the right directory
-if [ ! -f "uda-agent.py" ]; then
-    echo "❌ Error: Please run this script from the uda-agent directory"
+if [ ! -f "src/uda_agent.py" ]; then
+    echo "❌ Error: Please run this script from the uda-agent root directory"
     exit 1
 fi
 
@@ -144,7 +144,7 @@ echo "✅ Structured logging with OpenTelemetry"
 echo "✅ MQTT topic subscriptions"
 echo "✅ Proper VSS signal paths"
 echo "✅ Graceful error handling"
-echo "✅ Production-ready patterns"
+echo "✅ Complete SDV patterns"
 echo ""
 
 echo "🔍 SDV Monitoring Commands:"
@@ -161,7 +161,7 @@ echo ""
 
 echo "📊 Image Size Comparison:"
 echo "========================"
-echo "UDA Agent:                Production-ready with Velocitas SDK"
+echo "UDA Agent:                Complete with Velocitas SDK"
 echo "SDV Compatible UDA:       ~50MB (with Velocitas SDK)"
 echo "Full SDV Runtime:         ~500MB+"
 echo ""

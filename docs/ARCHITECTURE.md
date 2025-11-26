@@ -51,7 +51,7 @@ UDA Agent → Kit Server Adapter: device_status
 
 ### Workshop Mode
 - **Server**: Local workstation
-- **Clients**: Vehicles on production line
+- **Clients**: Vehicles on standard line
 - **Network**: Local WiFi/Ethernet
 - **Use Case**: Development and testing
 
@@ -127,7 +127,7 @@ value = response.json()['value']
 - **No Code Validation**: Arbitrary Python execution
 - **Basic Isolation**: Process-level only
 
-### Production Hardening
+### Standard Hardening
 - **Container Sandboxing**: Docker or chroot environments
 - **Code Signing**: Signed application packages
 - **Resource Limits**: CPU, memory, and disk quotas

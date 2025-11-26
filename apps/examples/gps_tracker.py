@@ -2,7 +2,7 @@
 
 """
 SDV Runtime Compatible GPS Tracker
-Production vehicle application using Velocitas Python SDK and KUKSA Data Broker
+Vehicle application using Velocitas Python SDK and KUKSA Data Broker
 
 Features:
 - Real KUKSA Data Broker integration via Velocitas SDK
@@ -10,7 +10,7 @@ Features:
 - Standard SDV patterns with proper VSS signal paths
 - Async/await architecture with signal subscriptions
 - OpenTelemetry structured logging
-- Production-ready error handling and graceful degradation
+- Comprehensive error handling and graceful degradation
 """
 
 import asyncio
@@ -20,7 +20,7 @@ import math
 from typing import Dict, Any, Optional, Tuple
 from datetime import datetime
 
-# Velocitas Python SDK imports - Production SDV Integration
+# Velocitas Python SDK imports - SDV Integration
 try:
     from vehicle import Vehicle, vehicle  # type: ignore
     from velocitas_sdk.util.log import (
