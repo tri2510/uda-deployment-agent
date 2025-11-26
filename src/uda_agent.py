@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class UniversalDeploymentAgent:
     """SDV Runtime Compatible Universal Deployment Agent"""
 
-    def __init__(self, kit_server_url="http://localhost:3090"):
+    def __init__(self, kit_server_url="https://kit.digitalauto.tech"):
         self.sio = socketio.Client()
         self.device_id = f"uda-{os.uname().nodename}-{uuid.uuid4().hex[:8]}"
         self.kit_server_url = kit_server_url
@@ -85,8 +85,8 @@ class UniversalDeploymentAgent:
             })
 
         @self.sio.event
-        def connect_error():
-            logger.error(f"❌ Failed to connect to Kit Server Adapter at {self.kit_server_url}")
+        def connect_error(data):
+            logger.error(f"❌ Failed to connect to Kit Server Adapter at {self.kit_server_url}: {data}")
 
         @self.sio.event
         def disconnect():
@@ -301,8 +301,8 @@ def main():
     parser = argparse.ArgumentParser(description='Universal Deployment Agent')
     parser.add_argument(
         '--server',
-        default='http://localhost:3090',
-        help='Kit Server Adapter URL (default: http://localhost:3090)'
+        default='https://kit.digitalauto.tech',
+        help='Kit Server Adapter URL (default: https://kit.digitalauto.tech)'
     )
     parser.add_argument(
         '--deployment-dir',

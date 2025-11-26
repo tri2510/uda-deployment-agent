@@ -1,30 +1,13 @@
-# SDV Runtime Compatible Requirements
-# Full Velocitas Python SDK integration with KUKSA Data Broker
-
-# Core Velocitas SDK
-velocitas-sdk==0.9.0
-
-# Vehicle signal access and KUKSA integration
-vehicle-app-sdk>=0.8.0
+# Core UDA Requirements
+# Essential packages for Universal Deployment Agent
 
 # Socket.IO for Kit Server communication
-python-socketio==5.8.0
-requests==2.31.0
+python-socketio>=5.8.0
+requests>=2.31.0
 
-# Async runtime and MQTT for KUKSA communication
-asyncio-mqtt==0.16.1
-aiohttp==3.9.0
-grpcio==1.59.0
-grpcio-tools==1.59.0
+# Core dependencies
+asyncio-mqtt>=0.16.1
+protobuf>=4.25.1
 
-# Data validation and processing
-pydantic==2.5.0
-typing-extensions==4.8.0
-
-# OpenTelemetry for structured logging (SDV standard)
-opentelemetry-api==1.21.0
-opentelemetry-sdk==1.21.0
-opentelemetry-exporter-otlp==1.21.0
-
-# Additional utilities
-protobuf==4.25.1
+# Velocitas SDK for SDV Runtime integration
+velocitas-sdk
