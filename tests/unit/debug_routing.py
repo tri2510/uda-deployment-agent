@@ -71,8 +71,9 @@ def start_mock_debug():
     print("🚀 DEBUG: Starting Mock Kit Server with logging...")
 
     # Start mock server with output visible
+    mock_server_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tools', 'mock_kit_server.py')
     process = subprocess.Popen([
-        sys.executable, '../tools/mock_kit_server.py'
+        sys.executable, mock_server_path
     ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
        universal_newlines=True, bufsize=1)
 

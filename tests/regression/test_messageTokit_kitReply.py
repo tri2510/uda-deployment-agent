@@ -134,9 +134,10 @@ def start_mock_server():
     """Start mock Kit Server"""
     print("🚀 Starting Mock Kit Server...")
 
-    # Use original working mock_kit_server.py
+    # Use absolute path to mock_kit_server.py
+    mock_server_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tools', 'mock_kit_server.py')
     process = subprocess.Popen([
-        sys.executable, '../tools/mock_kit_server.py'
+        sys.executable, mock_server_path
     ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
        universal_newlines=True, cwd='.')
 

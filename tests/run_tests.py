@@ -176,10 +176,32 @@ def generate_test_report(results):
 
     print(f"\n📄 Report saved to: {report_file}")
 
+def cleanup_environment():
+    """Run environment cleanup before tests"""
+    print("🧹 Cleaning test environment...")
+    try:
+        result = subprocess.run([sys.executable, 'cleanup.py'],
+                              capture_output=True, text=True, timeout=60)
+        if result.returncode == 0:
+            print("✅ Environment cleaned successfully")
+            return True
+        else:
+            print(f"⚠️  Cleanup warnings: {result.stderr}")
+            return True  # Continue despite cleanup warnings
+    except subprocess.TimeoutExpired:
+        print("⚠️  Cleanup timed out, continuing...")
+        return True
+    except Exception as e:
+        print(f"⚠️  Cleanup failed: {e}, continuing...")
+        return True
+
 def main():
     """Main test runner"""
     print("🧪 UDA Agent SDV Runtime Compatible Test Suite")
     print("=" * 60)
+
+    # Run cleanup first
+    cleanup_environment()
 
     # Check if UDA agent source exists
     if not os.path.exists("../src/uda_agent.py"):

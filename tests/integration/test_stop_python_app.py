@@ -90,8 +90,9 @@ def start_mock_server():
 
     try:
         # Start mock server in background
+        mock_server_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tools', 'mock_kit_server.py')
         process = subprocess.Popen([
-            sys.executable, '../tools/mock_kit_server.py'
+            sys.executable, mock_server_path
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Register cleanup function
