@@ -60,6 +60,9 @@ class UniversalDeploymentAgent:
         logger.info(f"📁 Deployment directory: {self.deployment_dir}")
         logger.info(f"📋 Log directory: {self.log_dir}")
 
+        # Setup SDV compatibility layer for legacy imports
+        self._setup_sdv_compatibility()
+
         # Setup Socket.IO event handlers
         self.setup_events()
 
@@ -135,6 +138,102 @@ class UniversalDeploymentAgent:
             logger.info(f"📨 Kit Server Event: {event}")
             if data:
                 logger.debug(f"📦 Data: {data}")
+
+    def _setup_sdv_compatibility(self):
+        """Setup SDV compatibility layer using symlink approach (same as SDV runtime)"""
+        try:
+            import sys
+            import os
+            import subprocess
+
+            # First, check if velocitas_sdk is available
+            try:
+                import velocitas_sdk
+                logger.info("✅ velocitas_sdk is available")
+            except ImportError as e:
+                logger.warning(f"⚠️ velocitas_sdk not available: {e}")
+                logger.warning("   Install with: pip install velocitas-sdk")
+                return
+
+            # Find velocitas_sdk installation path
+            import velocitas_sdk
+            velocitas_path = os.path.dirname(velocitas_sdk.__file__)
+            sdv_path = os.path.join(os.path.dirname(velocitas_path), 'sdv')
+
+            # Create symlink if it doesn't exist
+            if not os.path.exists(sdv_path):
+                try:
+                    os.symlink(velocitas_path, sdv_path)
+                    logger.info(f"✅ Created symlink: {sdv_path} → {velocitas_path}")
+                except OSError as e:
+                    logger.warning(f"⚠️ Could not create symlink: {e}")
+                    # Fallback to sys.modules approach if symlink fails
+                    self._setup_fallback_compatibility()
+                    return
+            else:
+                logger.info(f"✅ SDV symlink already exists: {sdv_path}")
+
+            # Add the parent directory to Python path if not already there
+            parent_dir = os.path.dirname(sdv_path)
+            if parent_dir not in sys.path:
+                sys.path.insert(0, parent_dir)
+                logger.info(f"✅ Added {parent_dir} to Python path")
+
+            # Test if sdv import works
+            try:
+                import sdv.vdb.reply
+                import sdv.vehicle_app
+                logger.info("✅ SDV compatibility verified - imports work correctly")
+            except ImportError as e:
+                logger.warning(f"⚠️ SDV import test failed: {e}")
+                logger.warning("   Using fallback compatibility mode")
+                self._setup_fallback_compatibility()
+
+        except Exception as e:
+            logger.error(f"❌ Failed to setup SDV compatibility: {e}")
+
+    def _setup_fallback_compatibility(self):
+        """Fallback compatibility using sys.modules redirection"""
+        try:
+            import sys
+            import types
+
+            # Import velocitas_sdk
+            import velocitas_sdk
+            import velocitas_sdk.vdb.reply
+            import velocitas_sdk.vehicle_app
+
+            # Create the sdv module that redirects to velocitas_sdk
+            sdv_module = types.ModuleType('sdv')
+            sdv_module.__doc__ = "SDV compatibility layer (fallback mode)"
+
+            # Create sdv.vdb submodule
+            sdv_vdb = types.ModuleType('vdb')
+            sdv_vdb.reply = velocitas_sdk.vdb.reply
+            sdv_vdb.__all__ = ['reply']
+
+            # Create sdv.vehicle_app submodule
+            sdv_vehicle_app = types.ModuleType('vehicle_app')
+            sdv_vehicle_app.VehicleApp = velocitas_sdk.vehicle_app.VehicleApp
+            if hasattr(velocitas_sdk.vehicle_app, 'subscribe_topic'):
+                sdv_vehicle_app.subscribe_topic = velocitas_sdk.vehicle_app.subscribe_topic
+
+            sdv_vehicle_app.__all__ = ['VehicleApp']
+
+            # Wire up the sdv module structure
+            sdv_module.vdb = sdv_vdb
+            sdv_module.vehicle_app = sdv_vehicle_app
+            sdv_module.__all__ = ['vdb', 'vehicle_app']
+
+            # Add to sys.modules
+            sys.modules['sdv'] = sdv_module
+            sys.modules['sdv.vdb'] = sdv_vdb
+            sys.modules['sdv.vehicle_app'] = sdv_vehicle_app
+
+            logger.info("✅ SDV fallback compatibility layer installed")
+
+        except ImportError as e:
+            logger.error(f"❌ Fallback compatibility failed: {e}")
 
     # Kit Server Compatible Helper Methods
     def send_kit_server_reply(self, request_from, cmd, result, is_done=True, code=0, token=None):
@@ -341,8 +440,14 @@ class UniversalDeploymentAgent:
             cmd = data.get('cmd', '')
             app_name = data.get('name', 'sdv-app')
 
-            # Get code - try convertedCode first, then code
-            code = data.get('convertedCode') or data.get('code', '')
+            # Get code - check multiple possible locations for code
+            code = (
+                data.get('convertedCode') or        # Top-level convertedCode (from Kit Manager)
+                data.get('code') or                 # Top-level code (from direct Frontend)
+                data.get('data', {}).get('code') or # Nested data.code (from SDV Syncer)
+                data.get('data', {}).get('convertedCode') or  # Nested data.convertedCode
+                ''
+            )
 
             if not code:
                 self._send_sdv_response(request_from, cmd, "No code provided", False, 1)
