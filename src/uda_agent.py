@@ -129,6 +129,8 @@ class UniversalDeploymentAgent:
                     self._handle_sdv_stop(data, request_from)
                 elif cmd == 'get-runtime-info':
                     self._handle_sdv_status(data, request_from)
+                elif cmd == 'subscribe_apis':
+                    self._handle_sdv_subscribe_apis(data, request_from)
                 else:
                     logger.warning(f"⚠️ Unknown SDV command: {cmd}")
                     self._send_sdv_response(request_from, cmd, "Unknown command", False, 1)
@@ -685,6 +687,35 @@ allow_anonymous true
         except Exception as e:
             logger.error(f"❌ SDV Status failed: {e}")
             self._send_sdv_response(request_from, 'get-runtime-info', str(e), False, 1)
+
+    def _handle_sdv_subscribe_apis(self, data, request_from):
+        """Handle SDV runtime subscribe_apis command"""
+        try:
+            logger.info(f"📡 SDV APIs subscription requested")
+
+            # Return the agent's capabilities and supported APIs
+            capabilities = {
+                'runtime_id': self.device_id,
+                'runtime_name': self.runtime_name,
+                'apis': [
+                    'python',
+                    'velocitas-sdk',
+                    'kuksa-databroker',
+                    'vehicle-signals',
+                    'mqtt',
+                    'docker'
+                ],
+                'status': 'online',
+                'message': 'UDA Agent APIs subscription successful'
+            }
+
+            # Send subscription response
+            self._send_sdv_response(request_from, 'subscribe_apis', json.dumps(capacities), True, 0)
+            logger.info(f"📡 SDV APIs subscription completed successfully")
+
+        except Exception as e:
+            logger.error(f"❌ SDV Subscribe APIs failed: {e}")
+            self._send_sdv_response(request_from, 'subscribe_apis', str(e), False, 1)
 
     def _send_sdv_response(self, request_from, cmd, result, success, return_code):
         """Send SDV runtime compatible response"""
