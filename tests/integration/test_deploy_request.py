@@ -87,6 +87,24 @@ def check_mock_server_running():
     except:
         return False
 
+def cleanup_existing_mock_servers():
+    """Kill any existing Mock Kit Server processes before starting new ones"""
+    try:
+        import subprocess
+        # Kill any processes using mock_kit_server.py
+        result = subprocess.run(['pkill', '-f', 'mock_kit_server.py'],
+                              capture_output=True, text=True)
+        # Also kill any process listening on port 3091
+        result = subprocess.run(['lsof', '-ti:3091'],
+                              capture_output=True, text=True)
+        if result.stdout.strip():
+            port_pids = result.stdout.strip().split('\n')
+            for pid in port_pids:
+                subprocess.run(['kill', '-9', pid], capture_output=True)
+        time.sleep(1)  # Give processes time to die
+    except:
+        pass
+
 def check_uda_agent_running():
     """Check if UDA agent process is running"""
     try:
@@ -100,13 +118,18 @@ def start_mock_server():
     """Start mock Kit Server"""
     print("🚀 Starting Mock Kit Server automatically...")
 
+    # Cleanup any existing Mock Kit Server processes
+    cleanup_existing_mock_servers()
+
+    # Calculate paths BEFORE changing directory
+    mock_server_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'tests', 'tools', 'mock_kit_server.py')
+
     # Change to tests directory
     tests_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(tests_dir)
 
     try:
         # Start mock server in background
-        mock_server_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tests', 'tools', 'mock_kit_server.py')
         process = subprocess.Popen([
             sys.executable, mock_server_path
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -137,13 +160,15 @@ def start_uda_agent():
     """Start UDA agent pointing to mock server"""
     print("🚀 Starting UDA Agent with mock server...")
 
+    # Calculate paths BEFORE changing directory
+    uda_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    uda_agent_path = os.path.join(uda_dir, 'src', 'uda_agent.py')
+
     # Change to the UDA directory
-    uda_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     os.chdir(uda_dir)
 
     try:
         # Start UDA agent in background pointing to mock server
-        uda_agent_path = os.path.join(uda_dir, 'src', 'uda_agent.py')
         process = subprocess.Popen([
             sys.executable, uda_agent_path, '--server', 'http://localhost:3091'
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
